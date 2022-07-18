@@ -8,6 +8,7 @@ import java.time.LocalDate;
 import java.time.Month;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
     @Data
@@ -29,24 +30,23 @@ import java.util.stream.Stream;
             List<UserOnline> usersOnline = Stream.generate(Runner::generateUser).limit(i).toList();
             //ТУТ ваш код (решение необязательно через стримы)
 
-            Map<Integer, LocalDate> usersOnlineQuantityAndDate = usersOnlineQuantityAndDate(usersOnline);
-            LocalDate maxUsersOnlineDate = maxUsersOnlineDate(usersOnlineQuantityAndDate);
-            int maxUsersOnlineQuantity = maxUsersOnlineQuantity(usersOnlineQuantityAndDate);
+            List<Integer> usersOnlineQuantity = usersOnlineQuantityAndDate(usersOnline);
+            int totalUsersEver = totalUsersEver(usersOnline);
+            int maxUsersOnlineQuantity = maxUsersOnlineQuantity(usersOnlineQuantity);
             UserOnline longestUserOnline = longestUserOnline(usersOnline);
-            long maxOnlineDuration = maxOnlineDuration(maxUsersOnlineDate, usersOnline);
             long longestUserWasOnlineDays = longestUserWasOnlineDays(longestUserOnline);
 
-            consoleResultsOutput(usersOnline, maxUsersOnlineDate, maxUsersOnlineQuantity, longestUserOnline, maxOnlineDuration, longestUserWasOnlineDays);
+            consoleResultsOtput(usersOnline, totalUsersEver, maxUsersOnlineQuantity, longestUserOnline, longestUserWasOnlineDays);
         }
 
-        private static void consoleResultsOutput(List<UserOnline> usersOnline, LocalDate maxUsersOnlineDate, int maxUsersOnlineQuantity, UserOnline longestUserOnline, long maxOnlineDuration, long longestUserWasOnlineDays) {
+        private static void consoleResultsOtput(List<UserOnline> usersOnline, int totalUsersEver, int maxUsersOnlineQuantity, UserOnline longestUserOnline, long longestUserWasOnlineDays) {
             System.out.println("ALL USERS: \n" + usersOnline);
+            System.out.println("Total users ever online: " + totalUsersEver);
             System.out.println("MAX users online: " + maxUsersOnlineQuantity +" users.");
-            System.out.println("Date of MAX users online: " + maxUsersOnlineDate);
-            System.out.println("Duration of MAX users online was: " + maxOnlineDuration+" day(s).");
             System.out.println("Longest ONLINE user - "+ longestUserOnline);
             System.out.println("He was online for - " + longestUserWasOnlineDays +" days.");
         }
+
 
         public static UserOnline longestUserOnline(List<UserOnline> usersOnline){
             return usersOnline.stream().min((o1, o2) -> (int) (ChronoUnit.DAYS.between(o2.getStartSession(), o2.getEndSession())
@@ -57,26 +57,28 @@ import java.util.stream.Stream;
             return ChronoUnit.DAYS.between(userOnline.getStartSession(), userOnline.getEndSession());
         }
 
-        public static Map<Integer, LocalDate> usersOnlineQuantityAndDate(List<UserOnline> usersOnline) {
-            Map<Integer, LocalDate> onlineUsersNow = new HashMap<>();
-            for (int i = 0; i < usersOnline.size(); i++) {
-                int countOnCurrentLoop = 1;
-                LocalDate currentMaximumDate = null;
-                LocalDate currentUserEndSession = usersOnline.get(i).getEndSession();
-                for (int j = 0; j < usersOnline.size(); j++) {
-                    if (i == j) {continue;}
-                    if (usersOnline.get(j).getStartSession().isBefore(currentUserEndSession)){
-                        countOnCurrentLoop++;
-                        currentMaximumDate = usersOnline.get(j).getStartSession();
+        public static List<Integer> usersOnlineQuantityAndDate(List<UserOnline> usersOnline){
+            List<Integer> resultOnlineList = new ArrayList<>();
+            List<List<LocalDate>> collect = usersOnline.stream()
+                    .map(userOnline -> userOnline.getStartSession().datesUntil(userOnline.getEndSession()).collect(Collectors.toList()))
+                    .toList();
+            for (int i = 0; i < collect.size(); i++) {
+                List<LocalDate> baseList = collect.get(i);
+                int count = 0;
+                for (int j = 0; j < collect.size(); j++) {
+                    if (i==j){continue;}
+                    List<LocalDate> comparingList = collect.get(j);
+                    if (comparingList.stream().anyMatch(baseList::contains)){
+                        count++;
                     }
                 }
-                onlineUsersNow.put(countOnCurrentLoop, currentMaximumDate);
+                resultOnlineList.add(count);
             }
-            return onlineUsersNow;
+        return resultOnlineList;
         }
 
-        public static int maxUsersOnlineQuantity (Map<Integer, LocalDate> onlineUsersNow) {
-            return Objects.requireNonNull(onlineUsersNow.entrySet().stream().max((o1, o2) -> o1.getKey() - o2.getKey()).orElse(null)).getKey();
+        public static int maxUsersOnlineQuantity (List<Integer> usersOnlineQuantity) {
+            return Collections.max(usersOnlineQuantity);
         }
 
         public static LocalDate maxUsersOnlineDate(Map<Integer, LocalDate> onlineUsersNow) {
@@ -91,6 +93,10 @@ import java.util.stream.Stream;
                             .orElse(null))
                             .getEndSession();
             return ChronoUnit.DAYS.between(maxUsersOnlineDate, firstUserExitFromBiggestOnline);
+        }
+
+        public static int totalUsersEver(List<UserOnline> usersOnline) {
+            return usersOnline.size();
         }
 
         public static UserOnline generateUser(){
