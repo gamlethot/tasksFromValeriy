@@ -60,7 +60,7 @@ import java.util.stream.Stream;
         public static Map<Integer, LocalDate> usersOnlineQuantityAndDate(List<UserOnline> usersOnline) {
             Map<Integer, LocalDate> onlineUsersNow = new HashMap<>();
             for (int i = 0; i < usersOnline.size(); i++) {
-                int countOnCurrentLoop = 0;
+                int countOnCurrentLoop = 1;
                 LocalDate currentMaximumDate = null;
                 LocalDate currentUserEndSession = usersOnline.get(i).getEndSession();
                 for (int j = 0; j < usersOnline.size(); j++) {
