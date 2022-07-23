@@ -38,7 +38,7 @@ public class Car {
 
     @Override
     public String toString() {
-        return "Task1.Car{" +
+        return "main.java.Task1.Car{" +
                 "name='" + name + '\'' +
                 ", createYear=" + createYear +
                 ", color='" + color + '\'' +
